@@ -10,6 +10,20 @@
 #include <arpa/inet.h>
 #include <signal.h>
 
+/**
+
+    Single Partner Chat Client
+
+    A chat client that connects to a chat server (see chatserverP.c)
+    This version of the chat programs uses processes to maintain concurrency between user input and incoming messages.
+
+    The program takes a user-supplied IP address to connect to the server, this will usually only work if the client
+    and server are on the same network.
+
+    Works on OSX and Linux: Use "gcc -o <executable name> chatclientP.c"
+
+**/
+
 int connect_server(char *IP, int port);
 static void child_handler(int sig);
 
@@ -21,6 +35,7 @@ int main(int argc, char *argv[])
     strtok(name, "\n");
     printf("\n");
 
+        // Takes an IPv4 Address
     printf("Which IP would you like to connect to, %s?\n > ", name);
 
     char IP[101] = {'\0'};
@@ -32,12 +47,15 @@ int main(int argc, char *argv[])
     fflush(stdout);
 
     int connfd;
+
+        // Port 9119 is assumed and used in the server code
     if ((connfd = connect_server(IP, 9119)) < 0)
     {
         printf("Error : Could Not Connect To Server\n");
         return 1;
     }
 
+        // Send user's name over the connection
     write(connfd, name, strlen(name));
 
     char recvBuff[1024] = {'\0'};
@@ -51,6 +69,8 @@ int main(int argc, char *argv[])
     printf("Type '-quit' at any point to sign off\n\n > ");
 
     pid_t child_pid;
+
+        // Fork a child process to handle incoming messages
     if ((child_pid = fork()) == 0){
         while (1)
         {
@@ -58,6 +78,7 @@ int main(int argc, char *argv[])
             recvBuff[count] = '\0';
             if(count > 0)
             {
+                    // If chat partner sends quit message end child process
                 if (strncmp(recvBuff, "-quit", 5) == 0){
                     printf("\r        ");
                     fflush(stdout);
@@ -68,8 +89,10 @@ int main(int argc, char *argv[])
         } 
     }
     else{
+            // Catch signal from terminated child process
         signal(SIGCHLD, child_handler);
 
+            // Add prefix to the send buffer so that all messages are sent with the user's name
         sendBuff[0] = '\r';
         strncpy(sendBuff + 1, name, strlen(name));
         char* msgStart = sendBuff + 1 + strlen(name);
@@ -77,10 +100,14 @@ int main(int argc, char *argv[])
         msgStart[1] = ' ';
         msgStart += 2;
         int maxLen = sizeof(sendBuff) - strlen(name) - 4;
+
+            // Loop waiting for input from keyboard, sends messages over connection
         while (1)
         {
             memset(msgStart, '\0', maxLen);
             if (fgets(msgStart, maxLen-3, stdin) != NULL){
+
+                    // If user sends quit message tell chat partner and kill child process
                 if (strncmp(msgStart, "-quit", 5) == 0){
                     printf("\r\t\n\tYou have signed off - Goodbye!\n");
                     fflush(stdout);
@@ -103,6 +130,7 @@ int main(int argc, char *argv[])
 
 }
 
+    // If the single child terminates the chat session is over
 static void child_handler(int sig)
 {
     waitpid(-1, NULL, WNOHANG);
@@ -110,7 +138,7 @@ static void child_handler(int sig)
     exit(0);
 }
 
-
+    // Creates a socket and attempts to connect it with the socket address provided
 int connect_server(char *IP, int port) 
 {
     int sockfd;

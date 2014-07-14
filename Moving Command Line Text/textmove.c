@@ -24,14 +24,14 @@ int main() {
 	fflush(stdout);
 	sleep(1);
     while(1){
-    	for (int i = 0; i < 11; i++) {
+    	for (int i = 0; i < 9; i++) {
             //wait a second to produce the dynamic moving effect
         sleep(1);
         printf(".");
         fflush(stdout);
     	}
     	sleep(3);
-    	printf("\b\b\b\b\b\b\b\b\b\b\b           \b\b\b\b\b\b\b\b\b\b\b");
+    	printf("\b\b\b\b\b\b\b\b\b         \b\b\b\b\b\b\b\b\b");
     	fflush(stdout);	
     }
     

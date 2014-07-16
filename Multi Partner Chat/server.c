@@ -58,6 +58,7 @@ int main(int argc, char *argv[])
 
             // New connection request
         if (FD_ISSET(listenfd, &pool.ready_set)) {
+            num_ready--;
                 // Kill the childing printing the waiting message
             if (waiting) {
                 waiting = 0;
